@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediCore — Login</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+  <style>
+    :root {
+      --teal:      #0EA5A0;
+      --teal-dark: #0c8f8a;
+      --teal-lt:   #E0F7F6;
+      --sky:       #3B9EE8;
+      --sage:      #4CAF7A;
+      --amber:     #F5A623;
+      --rose:      #E8506A;
+      --ink:       #0F2137;
+      --slate:     #344A5E;
+      --sb-bg:     #0D2B45;
+      --cream:     #F4F8FB;
+      --border:    #D8E8F0;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background: var(--cream);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Soft medical background */
+    body::before {
+      content: '';
+      position: fixed;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(14,165,160,0.1) 0%, transparent 65%);
+      top: -250px; right: -200px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+    body::after {
+      content: '';
+      position: fixed;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(59,158,232,0.08) 0%, transparent 65%);
+      bottom: -150px; left: -150px;
+      border-radius: 50%;
+      pointer-events: none;
+    }
+
+    /* Floating medical cross shapes */
+    .deco {
+      position: fixed;
+      pointer-events: none;
+      animation: floatMed 7s ease-in-out infinite;
+    }
+    .deco-cross {
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      color: var(--teal);
+      opacity: 0.12;
+      animation: floatMed 8s ease-in-out infinite;
+    }
+    .deco-1  { top: 12%; left: 7%;   animation-delay: 0s;   width: 60px; height: 60px; font-size: 2rem; opacity: 0.1; }
+    .deco-2  { bottom: 18%; right: 6%; animation-delay: 2.5s; width: 40px; height: 40px; font-size: 1.4rem; opacity: 0.09; }
+    .deco-3  { top: 55%; left: 4%;   animation-delay: 1.5s; width: 28px; height: 28px; font-size: 1.1rem; opacity: 0.1; color: var(--sky); }
+    .deco-4  { top: 20%; right: 12%; animation-delay: 3s;   width: 22px; height: 22px; font-size: 0.9rem; opacity: 0.12; color: var(--sage); }
+
+    @keyframes floatMed {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-18px); }
+    }
+
+    /* ECG line decoration */
+    .ecg-line {
+      position: fixed;
+      bottom: 30px;
+      left: 0; right: 0;
+      height: 40px;
+      overflow: hidden;
+      opacity: 0.06;
+      pointer-events: none;
+    }
+    .ecg-line svg { width: 100%; height: 100%; }
+
+    /* Main card */
+    .login-wrap {
+      display: flex;
+      width: 920px;
+      max-width: 96vw;
+      min-height: 560px;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 32px 80px rgba(15,33,55,0.14), 0 0 0 1px rgba(15,33,55,0.06);
+      position: relative;
+      z-index: 10;
+      animation: slideUp 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(36px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Left — hospital dark panel */
+    .left {
+      width: 44%;
+      background: var(--sb-bg);
+      padding: 3rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Subtle teal gradient top line */
+    .left::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg, var(--teal), var(--sky));
+    }
+
+    .left-bg-circle {
+      position: absolute;
+      border-radius: 50%;
+    }
+    .lbc-1 { width: 280px; height: 280px; background: var(--teal); opacity: 0.07; top: -90px; right: -90px; }
+    .lbc-2 { width: 200px; height: 200px; background: var(--sky); opacity: 0.06; bottom: 40px; left: -70px; }
+    .lbc-3 { width: 110px; height: 110px; background: var(--sage); opacity: 0.08; bottom: -30px; right: 50px; }
+
+    /* Cross grid pattern in bg */
+    .left-pattern {
+      position: absolute;
+      inset: 0;
+      background-image: radial-gradient(circle, rgba(14,165,160,0.08) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    .brand-area { position: relative; z-index: 1; }
+
+    .brand-cross {
+      width: 44px; height: 44px;
+      background: var(--teal);
+      border-radius: 12px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.4rem;
+      color: #fff;
+      font-weight: 900;
+      margin-bottom: 0.85rem;
+      box-shadow: 0 6px 20px rgba(14,165,160,0.4);
+    }
+
+    .brand-name {
+      font-family: 'Lora', serif;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      line-height: 1;
+    }
+    .brand-name span { color: var(--teal); }
+
+    .brand-sub {
+      font-size: 0.72rem;
+      color: rgba(255,255,255,0.35);
+      margin-top: 0.45rem;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .left-middle { position: relative; z-index: 1; }
+
+    .stat-pill {
+      display: flex;
+      align-items: center;
+      gap: 0.85rem;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 14px;
+      padding: 0.75rem 1rem;
+      margin-bottom: 0.75rem;
+      transition: background 0.2s;
+    }
+    .stat-pill:hover { background: rgba(255,255,255,0.08); }
+
+    .stat-pill-icon {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+    .spi-teal   { background: var(--teal);  color: #fff; }
+    .spi-sky    { background: var(--sky);   color: #fff; }
+    .spi-sage   { background: var(--sage);  color: #fff; }
+    .spi-amber  { background: var(--amber); color: #fff; }
+
+    .stat-pill-text { font-size: 0.83rem; color: rgba(255,255,255,0.65); line-height: 1.35; }
+    .stat-pill-text strong { color: #fff; display: block; font-size: 0.86rem; font-weight: 700; }
+
+    .left-footer {
+      font-size: 0.7rem;
+      color: rgba(255,255,255,0.2);
+      position: relative; z-index: 1;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .left-footer::before {
+      content: '✚';
+      color: var(--teal);
+      opacity: 0.5;
+    }
+
+    /* Right — form panel */
+    .right {
+      width: 56%;
+      background: #fff;
+      padding: 3rem 3.5rem;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+    }
+
+    .form-heading {
+      font-family: 'Lora', serif;
+      font-size: 1.9rem;
+      font-weight: 700;
+      color: var(--ink);
+      margin-bottom: 0.3rem;
+    }
+    .form-sub { font-size: 0.875rem; color: #8a9eb5; margin-bottom: 2rem; }
+
+    /* Role selector */
+    .role-selector {
+      display: flex;
+      gap: 0.55rem;
+      margin-bottom: 2rem;
+    }
+    .role-btn {
+      flex: 1;
+      border: 2px solid var(--border);
+      background: var(--cream);
+      border-radius: 12px;
+      padding: 0.65rem 0.5rem;
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+    .role-btn .role-icon {
+      font-size: 1.25rem;
+      display: block;
+      margin-bottom: 0.25rem;
+    }
+    .role-btn .role-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #9ab0c0;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+    .role-btn:hover { border-color: #b0c8d8; background: #f0f6fa; }
+    .role-btn.active-patient { border-color: var(--teal);  background: var(--teal-lt); }
+    .role-btn.active-patient .role-label { color: var(--teal-dark); }
+    .role-btn.active-doctor  { border-color: var(--sage);  background: #E8F7EE; }
+    .role-btn.active-doctor  .role-label { color: #2d7a4a; }
+    .role-btn.active-admin   { border-color: var(--rose);  background: #FDEDF0; }
+    .role-btn.active-admin   .role-label { color: #c0284a; }
+
+    /* Form fields */
+    .field-group { margin-bottom: 1.1rem; }
+    .field-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--slate);
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      margin-bottom: 0.4rem;
+      display: block;
+    }
+    .field-wrap { position: relative; }
+    .field-wrap i {
+      position: absolute;
+      left: 0.9rem; top: 50%;
+      transform: translateY(-50%);
+      color: #b0c4d4;
+      font-size: 1rem;
+    }
+    .field-input {
+      width: 100%;
+      border: 2px solid var(--border);
+      border-radius: 12px;
+      padding: 0.7rem 1rem 0.7rem 2.6rem;
+      font-size: 0.9rem;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      color: var(--ink);
+      background: var(--cream);
+      transition: all 0.2s;
+    }
+    .field-input:focus {
+      outline: none;
+      border-color: var(--teal);
+      background: #fff;
+      box-shadow: 0 0 0 4px rgba(14,165,160,0.1);
+    }
+
+    .btn-signin {
+      width: 100%;
+      padding: 0.85rem;
+      border: none;
+      border-radius: 12px;
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      font-size: 0.95rem;
+      font-weight: 700;
+      cursor: pointer;
+      transition: all 0.2s;
+      margin-top: 0.5rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      letter-spacing: 0.02em;
+    }
+    .btn-patient { background: var(--teal); color: #fff; }
+    .btn-patient:hover { background: var(--teal-dark); transform: translateY(-2px); box-shadow: 0 8px 22px rgba(14,165,160,0.35); }
+    .btn-doctor  { background: var(--sage); color: #fff; }
+    .btn-doctor:hover  { background: #3d9c69; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(76,175,122,0.35); }
+    .btn-admin   { background: var(--rose); color: #fff; }
+    .btn-admin:hover   { background: #d43c58; transform: translateY(-2px); box-shadow: 0 8px 22px rgba(232,80,106,0.35); }
+
+    .error-box {
+      background: #FDEDF0;
+      border: 1.5px solid #f5b8c4;
+      border-radius: 10px;
+      color: #c0284a;
+      padding: 0.7rem 1rem;
+      font-size: 0.85rem;
+      margin-bottom: 1.2rem;
+      display: flex; align-items: center; gap: 0.5rem;
+    }
+
+    .demo-box {
+      margin-top: 1.25rem;
+      background: #F0FDFB;
+      border: 1.5px dashed rgba(14,165,160,0.35);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      font-size: 0.78rem;
+      color: #2d6a65;
+    }
+    .demo-box strong { display: block; margin-bottom: 0.2rem; color: #0c5e59; font-size: 0.82rem; }
+
+    @media (max-width: 700px) {
+      .left { display: none; }
+      .right { width: 100%; padding: 2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="deco deco-cross deco-1">✚</div>
+  <div class="deco deco-cross deco-2">✚</div>
+  <div class="deco deco-cross deco-3">✚</div>
+  <div class="deco deco-cross deco-4">✚</div>
+
+  <div class="ecg-line">
+    <svg viewBox="0 0 1200 40" preserveAspectRatio="none" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline stroke="#0EA5A0" stroke-width="2" points="0,20 100,20 130,20 140,5 150,35 160,5 170,20 300,20 330,20 340,8 350,32 360,8 370,20 500,20 530,20 540,5 550,35 560,5 570,20 700,20 730,20 740,8 750,32 760,8 770,20 900,20 930,20 940,5 950,35 960,5 970,20 1200,20"/>
+    </svg>
+  </div>
+
+  <div class="login-wrap">
+    <!-- LEFT -->
+    <div class="left">
+      <div class="left-bg-circle lbc-1"></div>
+      <div class="left-bg-circle lbc-2"></div>
+      <div class="left-bg-circle lbc-3"></div>
+      <div class="left-pattern"></div>
+
+      <div class="brand-area">
+        <div class="brand-cross">✚</div>
+        <div class="brand-name">Medi<span>Core</span></div>
+        <div class="brand-sub">Hospital Management System</div>
+      </div>
+
+      <div class="left-middle">
+        <div class="stat-pill">
+          <div class="stat-pill-icon spi-teal"><i class="bi bi-people-fill"></i></div>
+          <div class="stat-pill-text"><strong>Patient Records</strong>Full history & insurance</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-icon spi-sky"><i class="bi bi-calendar2-check"></i></div>
+          <div class="stat-pill-text"><strong>Appointments</strong>Schedule & track visits</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-icon spi-sage"><i class="bi bi-clipboard2-pulse"></i></div>
+          <div class="stat-pill-text"><strong>Treatments</strong>Medical records & billing</div>
+        </div>
+        <div class="stat-pill">
+          <div class="stat-pill-icon spi-amber"><i class="bi bi-bar-chart-line"></i></div>
+          <div class="stat-pill-text"><strong>Analytics</strong>Real-time insights</div>
+        </div>
+      </div>
+
+      <div class="left-footer">2024 MediCore · Secure Healthcare Platform</div>
+    </div>
+
+    <!-- RIGHT -->
+    <div class="right">
+      <div class="form-heading">Sign in</div>
+      <div class="form-sub">Choose your role and enter your credentials</div>
+
+      <% if (error) { %>
+      <div class="error-box"><i class="bi bi-exclamation-circle-fill"></i> <%= error %></div>
+      <% } %>
+
+      <!-- Role tabs -->
+      <div class="role-selector">
+        <div class="role-btn active-patient" id="tab-patient" onclick="setRole('patient')">
+          <span class="role-icon">🏥</span>
+          <span class="role-label">Patient</span>
+        </div>
+        <div class="role-btn" id="tab-doctor" onclick="setRole('doctor')">
+          <span class="role-icon">👨‍⚕️</span>
+          <span class="role-label">Doctor</span>
+        </div>
+        <div class="role-btn" id="tab-admin" onclick="setRole('admin')">
+          <span class="role-icon">🛡️</span>
+          <span class="role-label">Admin</span>
+        </div>
+      </div>
+
+      <form action="/login" method="POST" id="loginForm">
+        <input type="hidden" name="role" id="roleInput" value="patient"/>
+
+        <div class="field-group">
+          <label class="field-label">Email Address</label>
+          <div class="field-wrap">
+            <i class="bi bi-envelope"></i>
+            <input type="email" name="email" class="field-input" placeholder="you@hospital.com" required autofocus/>
+          </div>
+        </div>
+
+        <div class="field-group">
+          <label class="field-label">Password</label>
+          <div class="field-wrap">
+            <i class="bi bi-lock"></i>
+            <input type="password" name="password" class="field-input" placeholder="••••••••" required/>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-signin btn-patient" id="submitBtn">
+          <i class="bi bi-box-arrow-in-right"></i> Sign In as Patient
+        </button>
+      </form>
+
+      <div class="demo-box">
+        <strong>💡 Demo Access</strong>
+        Patient / Doctor → use their <b>email from DB</b> (any password)<br>
+        Admin → <b>admin@hospital.com</b> / <b>admin123</b>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const roles = {
+      patient: { label: 'Patient',  btnClass: 'btn-patient', activeClass: 'active-patient' },
+      doctor:  { label: 'Doctor',   btnClass: 'btn-doctor',  activeClass: 'active-doctor'  },
+      admin:   { label: 'Admin',    btnClass: 'btn-admin',   activeClass: 'active-admin'   },
+    };
+
+    function setRole(role) {
+      document.getElementById('roleInput').value = role;
+      ['patient','doctor','admin'].forEach(r => {
+        const tab = document.getElementById('tab-' + r);
+        tab.className = 'role-btn' + (r === role ? ' ' + roles[r].activeClass : '');
+      });
+      const btn = document.getElementById('submitBtn');
+      btn.className = 'btn-signin ' + roles[role].btnClass;
+      btn.innerHTML = `<i class="bi bi-box-arrow-in-right"></i> Sign In as ${roles[role].label}`;
+    }
+  </script>
+</body>
+</html>

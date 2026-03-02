@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>MediCore — Admin Dashboard</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Lora:wght@600;700&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css"/>
+  <link rel="stylesheet" href="/style.css"/>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body class="dash-body">
+
+  <aside class="sidebar">
+    <div class="sb-logo">
+      <div class="sb-cross">✚</div>
+      <div class="sb-logo-text">MediCore</div>
+    </div>
+    <nav class="sb-nav">
+      <a href="#overview"    class="sb-link active" title="Overview"><i class="bi bi-speedometer2"></i></a>
+      <a href="#charts"      class="sb-link" title="Analytics"><i class="bi bi-bar-chart-fill"></i></a>
+      <a href="#appointments" class="sb-link" title="Appointments"><i class="bi bi-calendar2-check-fill"></i></a>
+      <a href="#patients"    class="sb-link" title="Patients"><i class="bi bi-people-fill"></i></a>
+      <a href="#doctors"     class="sb-link" title="Doctors"><i class="bi bi-person-badge-fill"></i></a>
+      <a href="#billing"     class="sb-link" title="Billing"><i class="bi bi-receipt-cutoff"></i></a>
+      <div class="sb-divider"></div>
+      <a href="#add-doctor"  class="sb-link" title="Add Doctor"><i class="bi bi-person-plus-fill"></i></a>
+      <a href="#add-patient" class="sb-link" title="Add Patient"><i class="bi bi-person-add"></i></a>
+    </nav>
+    <div class="sb-bottom">
+      <div class="sb-avatar sb-avatar-rose" title="Admin"><i class="bi bi-shield-lock-fill" style="font-size:0.85rem"></i></div>
+      <a href="/logout" class="sb-link sb-logout" title="Logout"><i class="bi bi-box-arrow-right"></i></a>
+    </div>
+  </aside>
+
+  <main class="dash-main">
+
+    <!-- TOP SEARCH BAR -->
+    <div class="top-bar">
+      <div class="search-wrap">
+        <i class="bi bi-search"></i>
+        <input type="text" class="search-input" id="globalSearch" placeholder="Search patients, doctors, appointments..." autocomplete="off"/>
+      </div>
+      <button class="search-filter-btn" onclick="document.getElementById('patients').scrollIntoView({behavior:'smooth'})">
+        <i class="bi bi-person-lines-fill"></i> Patients
+      </button>
+      <button class="search-filter-btn" onclick="document.getElementById('doctors').scrollIntoView({behavior:'smooth'})">
+        <i class="bi bi-person-badge-fill"></i> Doctors
+      </button>
+      <button class="search-filter-btn" onclick="document.getElementById('billing').scrollIntoView({behavior:'smooth'})">
+        <i class="bi bi-receipt-cutoff"></i> Billing
+      </button>
+      <div class="top-bar-date">
+        <i class="bi bi-calendar3"></i>
+        <%= new Date().toLocaleDateString('en-US', {weekday:'short', month:'short', day:'numeric', year:'numeric'}) %>
+      </div>
+    </div>
+
+    <header class="dash-header">
+      <div>
+        <h1 class="dash-title">Admin <span class="highlight-text">Dashboard</span></h1>
+        <p class="dash-sub">Full hospital overview & management</p>
+      </div>
+    </header>
+
+    <% if (success) { %><div class="flash flash-ok"><i class="bi bi-check-circle-fill"></i> <%= success %></div><% } %>
+    <% if (error)   { %><div class="flash flash-err"><i class="bi bi-x-circle-fill"></i> <%= error %></div><% } %>
+
+    <!-- KPI CARDS -->
+    <section id="overview" class="stats-row">
+      <div class="kpi-card kpi-teal">
+        <div class="kpi-icon"><i class="bi bi-people-fill"></i></div>
+        <div class="kpi-val"><%= stats.total_patients %></div>
+        <div class="kpi-label">Patients</div>
+      </div>
+      <div class="kpi-card kpi-sage">
+        <div class="kpi-icon"><i class="bi bi-person-badge-fill"></i></div>
+        <div class="kpi-val"><%= stats.total_doctors %></div>
+        <div class="kpi-label">Doctors</div>
+      </div>
+      <div class="kpi-card kpi-sky">
+        <div class="kpi-icon"><i class="bi bi-calendar2-fill"></i></div>
+        <div class="kpi-val"><%= stats.total_appointments %></div>
+        <div class="kpi-label">Appointments</div>
+      </div>
+      <div class="kpi-card kpi-amber">
+        <div class="kpi-icon"><i class="bi bi-currency-dollar"></i></div>
+        <div class="kpi-val">$<%= parseFloat(stats.total_revenue||0).toLocaleString() %></div>
+        <div class="kpi-label">Revenue</div>
+      </div>
+    </section>
+
+    <!-- CHARTS ROW -->
+    <section id="charts" class="charts-row">
+      <div class="chart-block">
+        <div class="block-header">
+          <h2 class="block-title"><span class="title-dot dot-teal"></span>Appointment Status</h2>
+        </div>
+        <div class="donut-wrap">
+          <canvas id="donutChart" width="200" height="200"></canvas>
+          <div class="donut-legend" id="donutLegend"></div>
+        </div>
+      </div>
+      <div class="chart-block chart-block-wide">
+        <div class="block-header">
+          <h2 class="block-title"><span class="title-dot dot-sky"></span>Revenue Over Time</h2>
+        </div>
+        <div style="position:relative; height:210px;">
+          <canvas id="lineChart"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- RECENT APPOINTMENTS -->
+    <section id="appointments" class="content-block">
+      <div class="block-header">
+        <h2 class="block-title"><span class="title-dot dot-sky"></span>Recent Appointments</h2>
+        <div class="block-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search appointments..." oninput="filterTable(this,'appt-table')"/>
+        </div>
+        <span class="count-tag">Last 10</span>
+      </div>
+      <div class="table-wrap">
+        <table class="nice-table" id="appt-table">
+          <thead><tr><th>#</th><th>Patient</th><th>Doctor</th><th>Date</th><th>Time</th><th>Status</th></tr></thead>
+          <tbody>
+            <% recentAppts.forEach(a => { %>
+            <tr>
+              <td class="muted-txt">#<%= a.appointment_id %></td>
+              <td><strong><%= a.pat_first %> <%= a.pat_last %></strong></td>
+              <td>Dr. <%= a.doc_first %> <%= a.doc_last %></td>
+              <td class="date-cell"><%= new Date(a.appointment_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) %></td>
+              <td><%= a.appointment_time ? a.appointment_time.slice(0,5) : '—' %></td>
+              <td><span class="status-pill sp-<%= a.status.toLowerCase().replace(' ','_') %>"><%= a.status %></span></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- PATIENTS -->
+    <section id="patients" class="content-block">
+      <div class="block-header">
+        <h2 class="block-title"><span class="title-dot dot-teal"></span>All Patients</h2>
+        <div class="block-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search patients..." oninput="filterTable(this,'pat-table')"/>
+        </div>
+        <span class="count-tag"><%= patients.length %></span>
+      </div>
+      <div class="table-wrap">
+        <table class="nice-table" id="pat-table">
+          <thead><tr><th>Name</th><th>Gender</th><th>DOB</th><th>Contact</th><th>Insurance</th><th>Registered</th></tr></thead>
+          <tbody>
+            <% patients.forEach(p => { %>
+            <tr>
+              <td>
+                <span class="mini-av"><%= p.first_name.charAt(0) %><%= p.last_name.charAt(0) %></span>
+                <strong><%= p.first_name %> <%= p.last_name %></strong>
+              </td>
+              <td><%= p.gender %></td>
+              <td class="date-cell"><%= p.date_of_birth ? new Date(p.date_of_birth).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—' %></td>
+              <td><%= p.contact_number %></td>
+              <td><%= p.insurance_provider || '—' %></td>
+              <td class="muted-txt"><%= p.registration_date ? new Date(p.registration_date).toLocaleDateString() : '—' %></td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- DOCTORS -->
+    <section id="doctors" class="content-block">
+      <div class="block-header">
+        <h2 class="block-title"><span class="title-dot dot-sage"></span>Medical Staff</h2>
+        <div class="block-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search doctors..." oninput="filterTable(this,'doc-table')"/>
+        </div>
+        <span class="count-tag"><%= doctors.length %></span>
+      </div>
+      <div class="table-wrap">
+        <table class="nice-table" id="doc-table">
+          <thead><tr><th>Doctor</th><th>Specialization</th><th>Experience</th><th>Branch</th><th>Contact</th><th>Action</th></tr></thead>
+          <tbody>
+            <% doctors.forEach(d => { %>
+            <tr>
+              <td>
+                <strong>Dr. <%= d.first_name %> <%= d.last_name %></strong>
+                <div class="muted-txt" style="font-size:0.75rem"><%= d.email %></div>
+              </td>
+              <td><span class="type-tag"><%= d.specialization %></span></td>
+              <td><%= d.years_experience %> yrs</td>
+              <td><%= d.hospital_branch %></td>
+              <td><%= d.phone_number %></td>
+              <td>
+                <form action="/admin/delete-doctor/<%= d.doctor_id %>?_method=DELETE" method="POST"
+                      onsubmit="return confirm('Remove Dr. <%= d.last_name %>?')">
+                  <button type="submit" class="del-btn"><i class="bi bi-trash3"></i></button>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- BILLING -->
+    <section id="billing" class="content-block">
+      <div class="block-header">
+        <h2 class="block-title"><span class="title-dot dot-amber"></span>Billing</h2>
+        <div class="block-search">
+          <i class="bi bi-search"></i>
+          <input type="text" placeholder="Search billing..." oninput="filterTable(this,'billing-table')"/>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table class="nice-table" id="billing-table">
+          <thead><tr><th>Bill #</th><th>Patient</th><th>Treatment</th><th>Amount</th><th>Date</th><th>Status</th><th>Action</th></tr></thead>
+          <tbody>
+            <% billing.forEach(b => { %>
+            <tr>
+              <td class="muted-txt">#<%= b.bill_id %></td>
+              <td><strong><%= b.patient_name %></strong></td>
+              <td><%= b.treatment_type || 'General' %></td>
+              <td class="money-cell">$<%= parseFloat(b.amount||0).toFixed(2) %></td>
+              <td class="date-cell"><%= new Date(b.bill_date).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) %></td>
+              <td><span class="status-pill sp-<%= (b.payment_status||'pending').toLowerCase() %>"><%= b.payment_status %></span></td>
+              <td>
+                <form action="/admin/update-billing" method="POST">
+                  <input type="hidden" name="bill_id" value="<%= b.bill_id %>"/>
+                  <select name="payment_status" class="mini-select" onchange="this.form.submit()">
+                    <option>Update</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Partial">Partial</option>
+                  </select>
+                </form>
+              </td>
+            </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ADD DOCTOR -->
+    <section id="add-doctor" class="content-block">
+      <div class="block-header">
+        <h2 class="block-title"><span class="title-dot dot-sage"></span>Add New Doctor</h2>
+      </div>
+      <div class="form-panel">
+        <form action="/admin/add-doctor" method="POST">
+          <div class="form-trio">
+            <div class="form-item"><label class="flabel">First Name</label><input type="text" name="first_name" class="finput" required/></div>
+            <div class="form-item"><label class="flabel">Last Name</label><input type="text" name="last_name" class="finput" required/></div>
+            <div class="form-item"><label class="flabel">Specialization</label><input type="text" name="specialization" class="finput" placeholder="e.g. Cardiology" required/></div>
+          </div>
+          <div class="form-trio" style="margin-top:1rem">
+            <div class="form-item"><label class="flabel">Phone</label><input type="text" name="phone_number" class="finput"/></div>
+            <div class="form-item"><label class="flabel">Years Experience</label><input type="number" name="years_experience" class="finput"/></div>
+            <div class="form-item"><label class="flabel">Branch</label><input type="text" name="hospital_branch" class="finput"/></div>
+          </div>
+          <div class="form-item" style="margin-top:1rem">
+            <label class="flabel">Email (login)</label>
+            <input type="email" name="email" class="finput" required/>
+          </div>
+          <button type="submit" class="fbtn fbtn-sage" style="margin-top:1rem"><i class="bi bi-person-check"></i> Add Doctor</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- ADD PATIENT -->
+    <section id="add-patient" class="content-block">
+      <div class="block-header">
+        <h2 class="block-title"><span class="title-dot dot-teal"></span>Register New Patient</h2>
+      </div>
+      <div class="form-panel">
+        <form action="/admin/add-patient" method="POST">
+          <div class="form-trio">
+            <div class="form-item"><label class="flabel">First Name</label><input type="text" name="first_name" class="finput" required/></div>
+            <div class="form-item"><label class="flabel">Last Name</label><input type="text" name="last_name" class="finput" required/></div>
+            <div class="form-item">
+              <label class="flabel">Gender</label>
+              <select name="gender" class="finput">
+                <option value="">— Select —</option>
+                <option>Male</option><option>Female</option><option>Other</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-trio" style="margin-top:1rem">
+            <div class="form-item"><label class="flabel">Date of Birth</label><input type="date" name="date_of_birth" class="finput"/></div>
+            <div class="form-item"><label class="flabel">Contact</label><input type="text" name="contact_number" class="finput"/></div>
+            <div class="form-item"><label class="flabel">Email (login)</label><input type="email" name="email" class="finput" required/></div>
+          </div>
+          <div class="form-trio" style="margin-top:1rem">
+            <div class="form-item"><label class="flabel">Insurance Provider</label><input type="text" name="insurance_provider" class="finput"/></div>
+            <div class="form-item"><label class="flabel">Insurance #</label><input type="text" name="insurance_number" class="finput"/></div>
+            <div class="form-item"><label class="flabel">Address</label><input type="text" name="address" class="finput"/></div>
+          </div>
+          <button type="submit" class="fbtn fbtn-teal" style="margin-top:1rem"><i class="bi bi-person-check"></i> Register Patient</button>
+        </form>
+      </div>
+    </section>
+
+  </main>
+
+  <script id="appt-data" type="application/json"><%- JSON.stringify(apptStats) %></script>
+  <script id="billing-data" type="application/json"><%- JSON.stringify(billing) %></script>
+  <script>
+    const apptStatsData = JSON.parse(document.getElementById('appt-data').textContent);
+    const billingData   = JSON.parse(document.getElementById('billing-data').textContent);
+  </script>
+
+  <script>
+    // ── TABLE SEARCH ──────────────────────────────────────
+    function filterTable(input, tableId) {
+      const q = input.value.toLowerCase();
+      const rows = document.getElementById(tableId).querySelectorAll('tbody tr');
+      rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+      });
+    }
+
+    // ── GLOBAL SEARCH ──────────────────────────────────────
+    document.getElementById('globalSearch').addEventListener('input', function() {
+      const q = this.value.toLowerCase().trim();
+      if (!q) return;
+      // Scroll to first matching section (patients, doctors, appointments, billing)
+      ['appt-table','pat-table','doc-table','billing-table'].forEach(id => {
+        const rows = document.getElementById(id).querySelectorAll('tbody tr');
+        rows.forEach(row => {
+          row.style.display = row.textContent.toLowerCase().includes(q) ? '' : 'none';
+        });
+      });
+    });
+    document.getElementById('globalSearch').addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        this.value = '';
+        ['appt-table','pat-table','doc-table','billing-table'].forEach(id => {
+          document.getElementById(id).querySelectorAll('tbody tr').forEach(r => r.style.display = '');
+        });
+      }
+    });
+
+    // ── DONUT CHART ─────────────────────────────────────
+    const statusColors = {
+      'Scheduled': '#3B9EE8',
+      'Completed':  '#4CAF7A',
+      'Cancelled':  '#E8506A',
+      'Pending':    '#F5A623',
+    };
+    const donutLabels = apptStatsData.map(s => s.status);
+    const donutValues = apptStatsData.map(s => parseInt(s.count));
+    const donutColors = donutLabels.map(l => statusColors[l] || '#0EA5A0');
+    const donutCtx = document.getElementById('donutChart').getContext('2d');
+    new Chart(donutCtx, {
+      type: 'doughnut',
+      data: {
+        labels: donutLabels,
+        datasets: [{
+          data: donutValues,
+          backgroundColor: donutColors,
+          borderWidth: 3,
+          borderColor: '#fff',
+          hoverBorderWidth: 4,
+        }]
+      },
+      options: {
+        cutout: '68%',
+        responsive: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: ctx => ` ${ctx.label}: ${ctx.raw} (${Math.round(ctx.raw / donutValues.reduce((a,b)=>a+b,0)*100)}%)`
+            }
+          }
+        }
+      }
+    });
+    const legend = document.getElementById('donutLegend');
+    donutLabels.forEach((label, i) => {
+      legend.innerHTML += `<div class="legend-item"><span class="legend-dot" style="background:${donutColors[i]}"></span><span class="legend-label">${label}</span><span class="legend-val">${donutValues[i]}</span></div>`;
+    });
+
+    // ── LINE CHART ───────────────────────────────────────
+    const monthlyRevenue = {};
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    billingData.forEach(b => {
+      if (b.payment_status === 'Paid' && b.bill_date) {
+        const d = new Date(b.bill_date);
+        const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`;
+        monthlyRevenue[key] = (monthlyRevenue[key] || 0) + parseFloat(b.amount || 0);
+      }
+    });
+    const sortedMonths = Object.keys(monthlyRevenue).sort().slice(-6);
+    const lineLabels = sortedMonths.map(k => {
+      const [y, m] = k.split('-');
+      return monthNames[parseInt(m)-1] + ' ' + y;
+    });
+    const lineValues = sortedMonths.map(k => monthlyRevenue[k]);
+    const hasRevData = lineLabels.length > 0;
+    const finalLabels = hasRevData ? lineLabels : ['Jan','Feb','Mar','Apr','May','Jun'];
+    const finalValues = hasRevData ? lineValues : [0,0,0,0,0,0];
+    const lineCtx = document.getElementById('lineChart').getContext('2d');
+    const gradient = lineCtx.createLinearGradient(0, 0, 0, 200);
+    gradient.addColorStop(0, 'rgba(14,165,160,0.2)');
+    gradient.addColorStop(1, 'rgba(14,165,160,0)');
+    new Chart(lineCtx, {
+      type: 'line',
+      data: {
+        labels: finalLabels,
+        datasets: [{
+          label: 'Revenue ($)',
+          data: finalValues,
+          borderColor: '#0EA5A0',
+          backgroundColor: gradient,
+          borderWidth: 2.5,
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: '#0EA5A0',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 5,
+          pointHoverRadius: 7,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` $${ctx.raw.toLocaleString()}` } }
+        },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#7A92A8' } },
+          y: { grid: { color: '#EEF3F8' }, ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#7A92A8', callback: v => '$' + v.toLocaleString() } }
+        }
+      }
+    });
+
+    // ── SIDEBAR TOOLTIPS ─────────────────────────────────
+    document.querySelectorAll('.sb-link[title]').forEach(el => {
+      el.addEventListener('mouseenter', function() {
+        const tip = document.createElement('div');
+        tip.className = 'sb-tooltip';
+        tip.textContent = this.getAttribute('title');
+        document.body.appendChild(tip);
+        const r = this.getBoundingClientRect();
+        tip.style.top = (r.top + r.height/2 - tip.offsetHeight/2) + 'px';
+        tip.style.left = (r.right + 10) + 'px';
+        this._tip = tip;
+      });
+      el.addEventListener('mouseleave', function() { if(this._tip) this._tip.remove(); });
+    });
+
+    // ── ACTIVE NAV ───────────────────────────────────────
+    const secs = document.querySelectorAll('section[id]');
+    const links = document.querySelectorAll('.sb-link[href^="#"]');
+    window.addEventListener('scroll', () => {
+      let cur = '';
+      secs.forEach(s => { if (window.scrollY >= s.offsetTop - 120) cur = s.id; });
+      links.forEach(l => {
+        l.classList.remove('active');
+        if (l.getAttribute('href') === '#' + cur) l.classList.add('active');
+      });
+    });
+  </script>
+</body>
+</html>
